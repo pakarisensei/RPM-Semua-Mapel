@@ -5,122 +5,123 @@ import { RPMInput, RPMGeneratedOutput } from "./types";
 export const generateRPMContent = async (input: RPMInput): Promise<RPMGeneratedOutput> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const isPJOK = /pjok|olahraga|jasmani|kesehatan/i.test(input.mapel);
-
   const prompt = `
     Bertindaklah sebagai pakar Kurikulum Merdeka dan Pembelajaran Mendalam (Deep Learning).
-    Buatlah Perencanaan Pembelajaran Mendalam (RPM) yang SANGAT DETAIL, PROFESIONAL, dan KOMPREHENSIF.
+    Buatlah Perencanaan Pembelajaran Mendalam (RPM) yang SANGAT DETAIL dan TERSTRUKTUR.
+
+    WAJIB GUNAKAN ISTILAH "MURID" (BUKAN PESERTA DIDIK).
 
     DATA INPUT:
     - Satuan Pendidikan: ${input.satuanPendidikan}
-    - Jenjang: ${input.jenjang}, Jurusan: ${input.jurusan || 'N/A'}
-    - Kelas: ${input.kelas}, Mapel: ${input.mapel}, Elemen: ${input.elemen}
-    - Materi: ${input.materi}
-    - CP: ${input.cp}
-    - TP: ${input.tp}
+    - Mata Pelajaran: ${input.mapel}
+    - Elemen Kurikulum: ${input.elemen}
+    - Materi Utama: ${input.materi}
+    - Capaian Pembelajaran (CP): ${input.cp}
+    - Tujuan Pembelajaran (TP): ${input.tp}
+    - Model Pedagogi: ${input.pedagogiPerPertemuan.map(p => `Sesi ${p.meetingNumber}: ${p.pedagogy}`).join(', ')}
 
-    INSTRUKSI STRUKTUR TABEL (WAJIB):
-    1. Kolom "Kegiatan" HANYA boleh berisi: "Kegiatan Awal", "Kegiatan Inti", atau "Kegiatan Penutup".
-    2. Kolom "Fase / Sintak" berisi: Sintak pedagogis sesuai model ${input.pedagogiPerPertemuan.map(p => p.pedagogy).join(', ')}.
-    3. Kolom "Langkah Pembelajaran": 
-       - WAJIB gunakan format daftar bernomor (1., 2., 3., dst).
-       - Gunakan baris baru (Enter/Newline) di setiap nomor agar rapi.
-       - Tambahkan emoji yang relevan di setiap awal poin untuk daya tarik visual.
+    STRUKTUR OUTPUT WAJIB:
+    1. Identifikasi: Generate deskripsi Murid, Lintas Disiplin Ilmu, dan Media Ajar (Alat/Bahan) yang konkret.
+    2. Desain Pembelajaran: Generate Topik, Kemitraan, Lingkungan Belajar, dan Pemanfaatan Digital (tool spesifik).
+    3. Pengalaman Belajar: Langkah detail (Awal, Inti, Penutup) per pertemuan dengan prinsip 3P (Berkesadaran, Bermakna, Menggembirakan).
+    4. Asesmen: Awal, Proses, dan Akhir.
+    5. Referensi & Tambahan: 
+       - Referensi Materi (Sertakan Judul dan Link URL dummy yang relevan, misal Youtube/PMM).
+       - Glosarium (minimal 3 istilah penting).
+       - Daftar Pustaka (referensi buku/web).
 
-    INSTRUKSI KONTEN KHUSUS:
-    - KEGIATAN AWAL: Sertakan instruksi detail Ice Breaking (jika umum) atau Pemanasan Dinamis (jika PJOK).
-    - KEGIATAN PENUTUP: Sertakan motivasi berupa QUOTES dari tokoh hebat/ilmuwan/atlet yang berbeda di setiap pertemuan, relevan dengan materi ${input.materi}.
-    - MEDIA & MATERI: Berikan link YouTube, Portal Guru, atau Game Edukasi (Wordwall/Quizizz/Blooket) yang BENAR-BENAR RELEVAN.
-
-    PRINSIP DEEP LEARNING (Label Indonesia & Inggris):
-    1. Berkesadaran Mindful
-    2. Bermakna Meaningful
-    3. Menggembirakan Joyful
-
-    Hasilkan output JSON yang sangat detail.
+    Output JSON murni sesuai schema. Teks harus profesional, edukatif, dan inspiratif.
   `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          identifikasi: {
-            type: Type.OBJECT,
-            properties: {
-              murid: { type: Type.STRING },
-              lintasDisiplin: { type: Type.STRING },
-              topik: { type: Type.STRING },
-              kemitraan: { type: Type.STRING },
-              lingkungan: { type: Type.STRING },
-              pemanfaatanDigital: { type: Type.STRING },
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            identifikasi: {
+              type: Type.OBJECT,
+              properties: {
+                murid: { type: Type.STRING },
+                lintasDisiplin: { type: Type.STRING },
+                topik: { type: Type.STRING },
+                kemitraan: { type: Type.STRING },
+                lingkungan: { type: Type.STRING },
+                pemanfaatanDigital: { type: Type.STRING },
+                mediaAjar: { type: Type.STRING },
+              },
+              required: ["murid", "lintasDisiplin", "topik", "kemitraan", "lingkungan", "pemanfaatanDigital", "mediaAjar"]
             },
-            required: ["murid", "lintasDisiplin", "topik", "kemitraan", "lingkungan", "pemanfaatanDigital"]
-          },
-          pengalamanBelajar: {
-            type: Type.OBJECT,
-            properties: {
-              perPertemuan: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    meetingNumber: { type: Type.NUMBER },
-                    pedagogy: { type: Type.STRING },
-                    langkahLangkah: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          kegiatan: { type: Type.STRING },
-                          fase: { type: Type.STRING },
-                          deskripsi: { type: Type.STRING },
-                          prinsip: { type: Type.ARRAY, items: { type: Type.STRING } }
-                        },
-                        required: ["kegiatan", "fase", "deskripsi", "prinsip"]
+            pengalamanBelajar: {
+              type: Type.OBJECT,
+              properties: {
+                perPertemuan: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      meetingNumber: { type: Type.NUMBER },
+                      pedagogy: { type: Type.STRING },
+                      langkahLangkah: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.OBJECT,
+                          properties: {
+                            kegiatan: { type: Type.STRING },
+                            fase: { type: Type.STRING },
+                            deskripsi: { type: Type.STRING },
+                            prinsip: { type: Type.ARRAY, items: { type: Type.STRING } }
+                          },
+                          required: ["kegiatan", "fase", "deskripsi", "prinsip"]
+                        }
                       }
-                    }
-                  },
-                  required: ["meetingNumber", "pedagogy", "langkahLangkah"]
-                }
+                    },
+                    required: ["meetingNumber", "pedagogy", "langkahLangkah"]
+                  }
+                },
+                referensiMateri: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      judul: { type: Type.STRING },
+                      url: { type: Type.STRING },
+                      tipe: { type: Type.STRING },
+                      deskripsi: { type: Type.STRING }
+                    },
+                    required: ["judul", "url", "tipe", "deskripsi"]
+                  }
+                },
+                lkpdDigital: { type: Type.STRING },
+                gameEdukasi: { type: Type.STRING }
               },
-              referensiMateri: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    judul: { type: Type.STRING },
-                    url: { type: Type.STRING },
-                    tipe: { type: Type.STRING },
-                    deskripsi: { type: Type.STRING }
-                  },
-                  required: ["judul", "url", "tipe", "deskripsi"]
-                }
+              required: ["perPertemuan", "referensiMateri", "lkpdDigital", "gameEdukasi"]
+            },
+            asesmen: {
+              type: Type.OBJECT,
+              properties: {
+                awal: { type: Type.STRING },
+                proses: { type: Type.STRING },
+                akhir: { type: Type.STRING },
               },
-              lkpdDigital: { type: Type.STRING },
-              gameEdukasi: { type: Type.STRING }
+              required: ["awal", "proses", "akhir"]
             },
-            required: ["perPertemuan", "referensiMateri", "lkpdDigital", "gameEdukasi"]
+            glosarium: { type: Type.STRING },
+            daftarPustaka: { type: Type.STRING }
           },
-          asesmen: {
-            type: Type.OBJECT,
-            properties: {
-              awal: { type: Type.STRING },
-              proses: { type: Type.STRING },
-              akhir: { type: Type.STRING },
-            },
-            required: ["awal", "proses", "akhir"]
-          },
-          glosarium: { type: Type.STRING },
-          daftarPustaka: { type: Type.STRING }
-        },
-        required: ["identifikasi", "pengalamanBelajar", "asesmen", "glosarium", "daftarPustaka"]
+          required: ["identifikasi", "pengalamanBelajar", "asesmen", "glosarium", "daftarPustaka"]
+        }
       }
-    }
-  });
+    });
 
-  return JSON.parse(response.text);
+    const text = response.text;
+    if (!text) throw new Error("Respons AI kosong.");
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Generator Error:", err);
+    throw err;
+  }
 };

@@ -84,6 +84,7 @@ export interface RPMGeneratedOutput {
     kemitraan: string;
     lingkungan: string;
     pemanfaatanDigital: string;
+    mediaAjar: string;
   };
   pengalamanBelajar: {
     perPertemuan: PengalamanPertemuan[];
