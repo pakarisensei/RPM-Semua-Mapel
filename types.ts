@@ -66,6 +66,10 @@ export interface RPMInput {
   cp: string;
   tp: string;
   materi: string;
+  semester: 'Ganjil' | 'Genap';
+  tahunPelajaran: string;
+  tempat: string;
+  tanggal: string;
   jumlahPertemuan: number;
   durasiPertemuan: string;
   pedagogiPerPertemuan: MeetingConfig[];
