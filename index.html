@@ -17,6 +17,14 @@
             .print-only { display: block; }
         }
     </style>
+    <!-- Mendefinisikan process agar tidak error di browser -->
+    <script>
+      window.process = {
+        env: {
+          API_KEY: "" // Ini akan diisi otomatis jika Anda menggunakan build step, atau biarkan kosong jika key diset di Netlify
+        }
+      };
+    </script>
 <script type="importmap">
 {
   "imports": {
@@ -30,5 +38,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- MEMANGGIL FILE UTAMA APLIKASI -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
